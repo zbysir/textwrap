@@ -36,7 +36,7 @@ func TextWrap(s string, over func(string) bool) []string {
 
 			i, last := breakWord(line, over)
 			result = append(result, i...)
-			// 如果一个单词被分为了多行则需要处理最后一行，尝鲜拼接 next
+			// 如果一个单词被分为了多行则需要处理最后一行，尝试拼接 next
 			//  case:
 			//  |Unite|
 			//  |d St |
