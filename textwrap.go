@@ -86,18 +86,23 @@ func ParseFont(fontBody []byte, fontSize float64) (font.Face, error) {
 func breakLine(x string) []string {
 	var result []string
 	pi := 0
-	ps := false
+	prevKind := width.Kind(-1)
 	rs := []rune(x)
 	for i, c := range rs {
-		wKind := width.LookupRune(c).Kind()
-		// break Wide or space
+		var wKind width.Kind
+		if unicode.IsSpace(c) {
+			wKind = -1
+		} else {
+			wKind = width.LookupRune(c).Kind()
+		}
+
 		isWidth := wKind == width.EastAsianFullwidth || wKind == width.EastAsianWide
-		s := unicode.IsSpace(c) || isWidth
-		if (s != ps || isWidth) && i > 0 {
+		// break on each Wide char and space
+		if (wKind != prevKind || isWidth) && i != 0 {
 			result = append(result, string(rs[pi:i]))
 			pi = i
 		}
-		ps = s
+		prevKind = wKind
 	}
 	result = append(result, string(rs[pi:]))
 	return result

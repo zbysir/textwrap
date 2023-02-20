@@ -6,8 +6,8 @@ import (
 )
 
 func TestSplitOnSpace(t *testing.T) {
-	lines := breakLine("本文实例，讲述了Go语言清除文件中空行的方法。This article ...")
-	assert.Equal(t, []string{"本", "文", "实", "例", "，", "讲", "述", "了", "Go", "语", "言", "清", "除", "文", "件", "中", "空", "行", "的", "方", "法", "。", "This", " ", "article", " ", "..."}, lines)
+	lines := breakLine("标准的具体规则在Unicode 换行算法 (Unicode Line Breaking Algorithm, UAX #14）中详细给出。")
+	assert.Equal(t, []string{"标", "准", "的", "具", "体", "规", "则", "在", "Unicode", " ", "换", "行", "算", "法", " ", "(Unicode", " ", "Line", " ", "Breaking", " ", "Algorithm,", " ", "UAX", " ", "#14", "）", "中", "详", "细", "给", "出", "。"}, lines)
 }
 
 func TestTextWrap(t *testing.T) {
