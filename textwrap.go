@@ -3,101 +3,54 @@ package textwrap
 import (
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
+	"golang.org/x/text/width"
 	"strings"
 	"unicode"
 )
 
+// TextWrapFont measure and Wrap text
+func TextWrapFont(s string, f font.Face, width float64) []string {
+	return TextWrap(s, func(s string) bool {
+		return measureWidth(f, s) > width
+	})
+}
+
 // TextWrap Wrap text without breaking words as much as possible;
 // Support Chinese characters and super long words
-func TextWrap(s string, f font.Face, width float64) []string {
-	return textWrap(s, func(s string) bool {
-		return fontWidth(f, s) > width
-	})
-}
-
-// ParseFontFace Parse font file to FontFace
-func ParseFontFace(fontBody []byte, fontSize float64) (font.Face, error) {
-	f, err := truetype.Parse(fontBody)
-	if err != nil {
-		return nil, err
-	}
-
-	face := truetype.NewFace(f, &truetype.Options{
-		Size: fontSize,
-	})
-
-	return face, nil
-}
-
-func splitOnSpace(x string) []string {
+func TextWrap(s string, over func(string) bool) []string {
 	var result []string
-	pi := 0
-	ps := false
-	for i, c := range x {
-		isHan := unicode.Is(unicode.Han, c)
-		s := unicode.IsSpace(c) || isHan
-		if (s != ps || isHan) && i > 0 {
-			result = append(result, x[pi:i])
-			pi = i
-		}
-		ps = s
-	}
-	result = append(result, x[pi:])
-	return result
-}
-
-func breakWord(s string, over func(string) bool) ([]string, string) {
-	if !over(s) {
-		return nil, s
-	}
-	var result []string
-	for {
-		for i := range s {
-			if !over(s[:i+1]) {
+	for _, l := range strings.Split(s, "\n") {
+		words := breakLine(l)
+		line := ""
+		for _, next := range words {
+			testLine := line + next
+			if !over(testLine) {
+				line = testLine
 				continue
 			}
 
-			result = append(result, s[:i])
-			s = s[i:]
-			break
-		}
-		if s == "" || !over(s) {
-			break
-		}
-	}
-
-	return result, s
-}
-
-func textWrap(s string, over func(string) bool) []string {
-	var result []string
-	for _, l := range strings.Split(s, "\n") {
-		words := splitOnSpace(l)
-		line := ""
-		for _, word := range words {
-			testLine := line + word
-			if over(testLine) {
-				if strings.TrimSpace(line) != "" {
-					i, last := breakWord(line, over)
-					result = append(result, i...)
-
-					// for case:
-					//  |Unite|
-					//  |d St |
-					if !over(last + word) {
-						line = last + word
-					} else {
-						if last != "" {
-							result = append(result, last)
-						}
-						line = word
-					}
-				} else {
-					line = word
-				}
-			} else {
-				line = testLine
+			if strings.TrimSpace(line) == "" {
+				line = next
+				continue
 			}
+
+			i, last := breakWord(line, over)
+			result = append(result, i...)
+			// 如果一个单词被分为了多行则需要处理最后一行，尝鲜拼接 next
+			//  case:
+			//  |Unite|
+			//  |d St |
+			if last != "" {
+				if !over(last + next) {
+					line = last + next
+					continue
+				} else {
+					result = append(result, last)
+				}
+			}
+
+			// 超出之后下一个单词就是下一行的开始
+			line = next
 		}
 
 		if strings.TrimSpace(line) != "" {
@@ -115,7 +68,65 @@ func textWrap(s string, over func(string) bool) []string {
 	return result
 }
 
-func fontWidth(f font.Face, s string) float64 {
+// ParseFont Parse font file to FontFace
+func ParseFont(fontBody []byte, fontSize float64) (font.Face, error) {
+	f, err := truetype.Parse(fontBody)
+	if err != nil {
+		return nil, err
+	}
+
+	face := truetype.NewFace(f, &truetype.Options{
+		Size: fontSize,
+	})
+
+	return face, nil
+}
+
+// return "break opportunities" (http://unicode.org/reports/tr14/)
+func breakLine(x string) []string {
+	var result []string
+	pi := 0
+	ps := false
+	rs := []rune(x)
+	for i, c := range rs {
+		wKind := width.LookupRune(c).Kind()
+		// break Wide or space
+		isWidth := wKind == width.EastAsianFullwidth || wKind == width.EastAsianWide
+		s := unicode.IsSpace(c) || isWidth
+		if (s != ps || isWidth) && i > 0 {
+			result = append(result, string(rs[pi:i]))
+			pi = i
+		}
+		ps = s
+	}
+	result = append(result, string(rs[pi:]))
+	return result
+}
+
+func breakWord(s string, over func(string) bool) ([]string, string) {
+	var result []string
+	runes := []rune(s)
+	for len(runes) != 0 && over(string(runes)) {
+		max := 0
+		for i := range runes {
+			if over(string(runes[:i+1])) {
+				max = i
+				break
+			}
+		}
+
+		if max == 0 {
+			max = 1
+		}
+
+		result = append(result, string(runes[:max]))
+		runes = runes[max:]
+	}
+
+	return result, string(runes)
+}
+
+func measureWidth(f font.Face, s string) float64 {
 	advance := font.MeasureString(f, s)
 	return float64(advance >> 6)
 }
