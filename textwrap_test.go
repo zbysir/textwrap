@@ -5,9 +5,9 @@ import (
 	"testing"
 )
 
-func TestSplitOnSpace(t *testing.T) {
-	lines := breakLine("标准的具体规则在Unicode 换行算法 (Unicode Line Breaking Algorithm, UAX #14）中详细给出。")
-	assert.Equal(t, []string{"标", "准", "的", "具", "体", "规", "则", "在", "Unicode", " ", "换", "行", "算", "法", " ", "(Unicode", " ", "Line", " ", "Breaking", " ", "Algorithm,", " ", "UAX", " ", "#14", "）", "中", "详", "细", "给", "出", "。"}, lines)
+func TestBreakLine(t *testing.T) {
+	lines := breakLine("🍓🍓标准的具体规则在Unicode 换行算法 (Unicode Line Breaking Algorithm, UAX #14）中详细给出。")
+	assert.Equal(t, []string{"🍓", "🍓", "标", "准", "的", "具", "体", "规", "则", "在", "Unicode", " ", "换", "行", "算", "法", " ", "(Unicode", " ", "Line", " ", "Breaking", " ", "Algorithm,", " ", "UAX", " ", "#14", "）", "中", "详", "细", "给", "出", "。"}, lines)
 }
 
 func TestTextWrap(t *testing.T) {

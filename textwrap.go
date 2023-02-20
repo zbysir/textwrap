@@ -3,9 +3,9 @@ package textwrap
 import (
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/font"
-	"golang.org/x/text/width"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 // TextWrapFont measure and Wrap text
@@ -86,23 +86,21 @@ func ParseFont(fontBody []byte, fontSize float64) (font.Face, error) {
 func breakLine(x string) []string {
 	var result []string
 	pi := 0
-	prevKind := width.Kind(-1)
+	prevKind := -1
 	rs := []rune(x)
 	for i, c := range rs {
-		var wKind width.Kind
-		if unicode.IsSpace(c) {
-			wKind = -1
-		} else {
-			wKind = width.LookupRune(c).Kind()
+		var kind = -1
+		if !unicode.IsSpace(c) {
+			kind = utf8.RuneLen(c)
 		}
 
-		isWidth := wKind == width.EastAsianFullwidth || wKind == width.EastAsianWide
+		isWidth := kind >= 3
 		// break on each Wide char and space
-		if (wKind != prevKind || isWidth) && i != 0 {
+		if (kind != prevKind || isWidth) && i != 0 {
 			result = append(result, string(rs[pi:i]))
 			pi = i
 		}
-		prevKind = wKind
+		prevKind = kind
 	}
 	result = append(result, string(rs[pi:]))
 	return result
