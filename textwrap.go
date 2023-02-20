@@ -94,9 +94,9 @@ func breakLine(x string) []string {
 			kind = utf8.RuneLen(c)
 		}
 
-		isWidth := kind >= 3
+		isWide := kind >= 3
 		// break on each Wide char and space
-		if (kind != prevKind || isWidth) && i != 0 {
+		if (kind != prevKind || isWide) && i != 0 {
 			result = append(result, string(rs[pi:i]))
 			pi = i
 		}
