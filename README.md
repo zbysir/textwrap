@@ -1,5 +1,7 @@
 # textwrap
-Better text wrap algorithms
+Text wrap algorithms like css ['overflow-wrap: break-word;'](https://developer.mozilla.org/zh-CN/docs/Web/CSS/overflow-wrap)
+
+![overflow-wrap: break-word](overflow-wrap-demo.png)
 
 - Wrap text without breaking words as much as possible
 - Support Chinese characters and super long words
